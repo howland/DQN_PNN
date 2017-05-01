@@ -18,6 +18,8 @@ import prog_nn
 Q_FUNC_PARAM_COL_NUM = 'column_number'
 CHECKPOINT_BASE_PATH = 'checkpoint_path'
 CHECKPOINTS_LIST = 'checkpoints_list'
+RESTORE_FROM_SAVE = 'resore_from_save'
+RESTORE_CHECKPOINT = 'restore_from_save_path'
 
 
 '''
@@ -28,6 +30,7 @@ def helicopter_model(input_shape, num_actions, session, prog_q_func_params, scop
     column_number = prog_q_func_params[Q_FUNC_PARAM_COL_NUM]
     checkpoint_base_path = prog_q_func_params[CHECKPOINT_BASE_PATH]
     checkpoint_list = prog_q_func_params[CHECKPOINTS_LIST]
+    resume_training = prog_q_func_params[RESTORE_FROM_SAVE]
     # TODO: parametrize topology in prog_q_func_params
 
     if column_number < 1:
@@ -57,6 +60,11 @@ def helicopter_model(input_shape, num_actions, session, prog_q_func_params, scop
         print("previous columns are: ", prev_columns)
 
         column = prog_nn.ExtensibleColumnProgNN(topology1, activations, session, checkpoint_base_path, prev_columns, dtype=tf.float32)
+
+    if resume_training:
+        restore_checkpoint = prog_q_func_params[RESTORE_CHECKPOINT]
+        column.restore_weights(restore_checkpoint)
+
 
     return column
 
@@ -170,6 +178,8 @@ def main():
         Q_FUNC_PARAM_COL_NUM : 0,
         CHECKPOINT_BASE_PATH : 'helicopter_test',
         CHECKPOINTS_LIST : [],
+        RESTORE_FROM_SAVE : False,
+        # RESTORE_CHECKPOINT : 153,
     }
 
     # For second column
@@ -177,6 +187,8 @@ def main():
         Q_FUNC_PARAM_COL_NUM : 1,
         CHECKPOINT_BASE_PATH : 'helicopter_test',
         CHECKPOINTS_LIST : [60], # Change to latest checkpoint for col 0
+        RESTORE_FROM_SAVE : False,
+        # RESTORE_CHECKPOINT : 67,
     }
 
     # For third column
@@ -184,6 +196,8 @@ def main():
         Q_FUNC_PARAM_COL_NUM : 2,
         CHECKPOINT_BASE_PATH : 'helicopter_test',
         CHECKPOINTS_LIST : [60, 40], # Change to latest checkpoints for col 0 and 1
+        RESTORE_FROM_SAVE : False,
+        # RESTORE_CHECKPOINT : 0,
     }
 
     seed = 0 # Use a seed of zero (you may want to randomize the seed!)
