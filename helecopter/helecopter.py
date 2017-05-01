@@ -6,7 +6,6 @@ from random import randint
 STILL = 0
 UP = 1
 DOWN = 2
-# RIGHT = 2
 
 EMPTY_VALUE = 0
 WALL_VALUE = 1
@@ -19,13 +18,24 @@ PELLET_REWARD = 20 * REWARD_SCALE
 STEP_REWARD = 1 * REWARD_SCALE
 CRASH_REWARD = -10 * REWARD_SCALE
 
-# Later on: add possibility to not go right by default?
-# TRANSFORMATIONS = {UP:np.array([0,-1]), RIGHT:np.array([1,0]), DOWN:np.array([0,1])}
 TRANSFORMATIONS = {STILL:np.array([0,0]), UP:np.array([0,-1]), DOWN:np.array([0,1])}
 
 class HelecopterEnv():
     '''
-    Parameters:
+    Creates a helecopter environment. params is a dictionary, which must have
+    the following key-value pairs:
+        'length' : The length (width) of the helecopter environment. Must be
+                   greater than or equal to the visible_width.
+        'height' : Height for the helecopter environment. The playable area
+                   will be height-2, because the top and bottom of the
+                   environment are padded with a wall.
+        'visible_width' : Width of the area observeable to the agent.
+        'num_column_obstacles' : Number of column obstacles found throughout
+                                 the environment. Must be < (length - 2 *
+                                 visible_width)
+        'flatten_output' : If the output returned by step() should be flattened.
+        'padding' : Integer, number of layers of wall padding to apply to floor
+                    and ceiling.
     '''
     def __init__(self, params):
         self.length = params['length']
@@ -34,7 +44,6 @@ class HelecopterEnv():
         self.num_column_obstacles = params['num_column_obstacles']
         self.flatten_output = params['flatten_output']
         self.padding = params['padding']
-        # Add gravity parameter?
 
         if self.num_column_obstacles != 0:
             assert(self.length > 2*self.visible_width)
@@ -46,14 +55,14 @@ class HelecopterEnv():
         self.agent_coords = np.array([0,0])
         self.column_obstacle_indices = []
         self.action_space = np.array([UP, DOWN, STILL])
-        # self.action_space = np.array([UP, DOWN, RIGHT])
-        # if self.larger_display_shape is not None:
-            # self.observation_space_shape = [self.larger_display_shape[0] * self.larger_display_shape[1]]
-        # else:
         self.observation_space_shape = [self.visible_width * self.height]
 
-
-
+    '''
+    Returns current state of the environment, as seen by the agent.
+    If flatten is:
+        false: array of size [visible_width, height] returned
+        true: array of size visible_width * height returned
+    '''
     def get_state(self, flatten=False):
         offset = self.agent_coords[0]
         state = np.zeros(shape=(self.visible_width, self.height))
@@ -67,7 +76,7 @@ class HelecopterEnv():
 
 
     '''
-    Resets environment, returns first observation
+    Resets environment, returns first observation.
     '''
     def reset(self):
         self.time = 0
@@ -85,7 +94,6 @@ class HelecopterEnv():
         for i in range(self.padding):
             self.environment[:,1+i] = WALL_VALUE
             self.environment[:,self.height-2-i] = WALL_VALUE
-
 
         # Generate column obstacles
         self.column_obstacle_indices = []
@@ -115,9 +123,8 @@ class HelecopterEnv():
         return self.get_state(flatten=self.flatten_output)
 
     '''
-    Steps environment, returns observation of the following state
-
-    Returns observation, reward, done
+    Steps environment with the specified action.
+    Returns observation, reward, done.
     '''
     def step(self, action):
         assert(action in self.action_space)
@@ -141,14 +148,13 @@ class HelecopterEnv():
         else:
             reward = STEP_REWARD
 
-        # elif maze_new_position_value == PELLET_VALUE:
-            # reward = PELLET_REWARD
-            # self.maze[new_position[0]][new_position[1]] = EMPTY_VALUE
         self.agent_coords = new_position
+        return self.get_state(flatten=self.flatten_output), reward, \
+               self.done, "info_not_implemented"
 
-
-        return self.get_state(flatten=self.flatten_output), reward, self.done, "info_not_implemented"
-
+    '''
+    Prints the current state of the environment, as seen by the agent.
+    '''
     def display_grid(self):
         print(self.get_state(flatten=False))
 
