@@ -12,7 +12,7 @@ sys.path.append("../")
 
 import prog_dqn
 from dqn_utils import *
-from helecopter import helecopter
+from helicopter import helicopter
 import prog_nn
 
 Q_FUNC_PARAM_COL_NUM = 'column_number'
@@ -24,7 +24,7 @@ CHECKPOINTS_LIST = 'checkpoints_list'
 Function passed to dqn used for creating the progressive neural network column
 for q value estimation.
 '''
-def helecopter_model(input_shape, num_actions, session, prog_q_func_params, scope, reuse=False):
+def helicopter_model(input_shape, num_actions, session, prog_q_func_params, scope, reuse=False):
     column_number = prog_q_func_params[Q_FUNC_PARAM_COL_NUM]
     checkpoint_base_path = prog_q_func_params[CHECKPOINT_BASE_PATH]
     checkpoint_list = prog_q_func_params[CHECKPOINTS_LIST]
@@ -66,7 +66,7 @@ num_timesteps, exploration is fixed at 0.01.
 
 See sample invocations in main()
 '''
-def helecopter_learn(env, session, num_timesteps, q_func_params):
+def helicopter_learn(env, session, num_timesteps, q_func_params):
     # This is just a rough estimate
     num_iterations = float(num_timesteps) / 4.0
     lr_multiplier = 1.0
@@ -95,7 +95,7 @@ def helecopter_learn(env, session, num_timesteps, q_func_params):
 
     prog_dqn.learn(
         env,
-        prog_q_func=helecopter_model,
+        prog_q_func=helicopter_model,
         prog_q_func_params=q_func_params,
         optimizer_spec=optimizer,
         session=session,
@@ -168,32 +168,32 @@ def main():
 
     col_0_q_params = {
         Q_FUNC_PARAM_COL_NUM : 0,
-        CHECKPOINT_BASE_PATH : 'helecopter_test',
+        CHECKPOINT_BASE_PATH : 'helicopter_test',
         CHECKPOINTS_LIST : [],
     }
 
     # For second column
     col_1_q_params = {
         Q_FUNC_PARAM_COL_NUM : 1,
-        CHECKPOINT_BASE_PATH : 'helecopter_test',
+        CHECKPOINT_BASE_PATH : 'helicopter_test',
         CHECKPOINTS_LIST : [60], # Change to latest checkpoint for col 0
     }
 
     # For third column
     col_2_q_params = {
         Q_FUNC_PARAM_COL_NUM : 2,
-        CHECKPOINT_BASE_PATH : 'helecopter_test',
+        CHECKPOINT_BASE_PATH : 'helicopter_test',
         CHECKPOINTS_LIST : [60, 40], # Change to latest checkpoints for col 0 and 1
     }
 
     seed = 0 # Use a seed of zero (you may want to randomize the seed!)
     # Specify params for  col 0, 1, or 2
-    env = helecopter.HelecopterEnv(env_0_params)
+    env = helicopter.HelicopterEnv(env_0_params)
     set_global_seeds(seed)
     # env.seed(seed)
     session = get_session()
     # Specify params for  col 0, 1, or 2
-    helecopter_learn(env, session, num_timesteps=int(4e7), q_func_params=col_0_q_params)
+    helicopter_learn(env, session, num_timesteps=int(4e7), q_func_params=col_0_q_params)
 
 if __name__ == "__main__":
     main()

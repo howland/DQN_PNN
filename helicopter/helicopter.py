@@ -20,13 +20,13 @@ CRASH_REWARD = -10 * REWARD_SCALE
 
 TRANSFORMATIONS = {STILL:np.array([0,0]), UP:np.array([0,-1]), DOWN:np.array([0,1])}
 
-class HelecopterEnv():
+class HelicopterEnv():
     '''
-    Creates a helecopter environment. params is a dictionary, which must have
+    Creates a helicopter environment. params is a dictionary, which must have
     the following key-value pairs:
-        'length' : The length (width) of the helecopter environment. Must be
+        'length' : The length (width) of the helicopter environment. Must be
                    greater than or equal to the visible_width.
-        'height' : Height for the helecopter environment. The playable area
+        'height' : Height for the helicopter environment. The playable area
                    will be height-2, because the top and bottom of the
                    environment are padded with a wall.
         'visible_width' : Width of the area observeable to the agent.
