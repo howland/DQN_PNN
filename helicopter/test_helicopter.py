@@ -10,6 +10,9 @@ params = {
         'num_column_obstacles' : 5,
         'flatten_output' : True,
         'padding' : 0,
+        'num_positive_pellets' : 100,
+        'num_negative_pellets' : 100,
+        'num_random_obstacles' : 0,
 }
 
 helicopter_test = helicopter.HelicopterEnv(params)

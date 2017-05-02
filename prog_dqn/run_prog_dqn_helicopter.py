@@ -32,21 +32,37 @@ def helicopter_model(input_shape, num_actions, session, prog_q_func_params, scop
     checkpoint_list = prog_q_func_params[CHECKPOINTS_LIST]
     resume_training = prog_q_func_params[RESTORE_FROM_SAVE]
     # TODO: parametrize topology in prog_q_func_params
+    parameter_reduction_experiment = False
 
     if column_number < 1:
         # Assuming input_shape is length 1 (haven't implemented convolution yet)
-        topology1 = [input_shape[0], 128, 128, 64, num_actions]
-        activations = [tf.nn.relu, tf.nn.relu, tf.nn.relu, None]
-
+        if parameter_reduction_experiment:
+            topology1 = [input_shape[0], 128, 64, num_actions]
+            activations = [tf.nn.relu, tf.nn.relu, None]
+        else:
+            topology1 = [input_shape[0], 128, 128, 64, num_actions]
+            activations = [tf.nn.relu, tf.nn.relu, tf.nn.relu, None]
         column = prog_nn.InitialColumnProgNN(topology1, activations, session, checkpoint_base_path, dtype=tf.float32)
     else:
-        # TODO: SEPERATE, STORE, AND LOAD FOR EACH INDIVIDUAL COLUMN BEING RESTORED!!!
-        topology1 = [input_shape[0], 128, 128, 64, num_actions]
-        activations = [tf.nn.relu, tf.nn.relu, tf.nn.relu, None]
-
         # Restore previous columns here
         prev_columns = []
         for i in range(column_number):
+            if parameter_reduction_experiment:
+                if i == 1:
+                    topology1 = [input_shape[0], 128, 64, num_actions]
+                elif i == 2:
+                    topology1 = [input_shape[0], 64, 32, num_actions]
+                elif i == 3:
+                    topology1 = [input_shape[0], 32, 32, num_actions]
+                elif i == 4:
+                    topology1 = [input_shape[0], 16, 16, num_actions]
+                elif i > 4:
+                    assert(False)
+                activations = [tf.nn.relu, tf.nn.relu, None]
+            else:
+                # TODO: SEPERATE, STORE, AND LOAD FOR EACH INDIVIDUAL COLUMN BEING RESTORED!!!
+                topology1 = [input_shape[0], 128, 128, 64, num_actions]
+                activations = [tf.nn.relu, tf.nn.relu, tf.nn.relu, None]
             print("reconstructing column i: ", i)
             if i == 0:
                 col_i = prog_nn.InitialColumnProgNN(topology1, activations, session, checkpoint_base_path, dtype=tf.float32)
@@ -120,16 +136,6 @@ def helicopter_learn(env, session, num_timesteps, q_func_params):
     )
     env.close()
 
-def set_global_seeds(i):
-    try:
-        import tensorflow as tf
-    except ImportError:
-        pass
-    else:
-        tf.set_random_seed(i)
-    np.random.seed(i)
-    random.seed(i)
-
 def get_session():
     tf.reset_default_graph()
     tf_config = tf.ConfigProto(
@@ -154,6 +160,9 @@ def main():
             'num_column_obstacles' : 0,
             'flatten_output' : True,
             'padding' : 0,
+            'num_positive_pellets' : 0,
+            'num_negative_pellets' : 0,
+            'num_random_obstacles' : 0,
     }
 
     env_1_params = {
@@ -163,6 +172,9 @@ def main():
             'num_column_obstacles' : 1,
             'flatten_output' : True,
             'padding' : 0,
+            'num_positive_pellets' : 0,
+            'num_negative_pellets' : 0,
+            'num_random_obstacles' : 0,
     }
 
     env_2_params = {
@@ -172,8 +184,36 @@ def main():
             'num_column_obstacles' : 15,
             'flatten_output' : True,
             'padding' : 0,
+            'num_positive_pellets' : 0,
+            'num_negative_pellets' : 0,
+            'num_random_obstacles' : 0,
     }
 
+    env_3_params = {
+            'length' : 100,
+            'height' : 10,
+            'visible_width' : 10,
+            'num_column_obstacles' : 0,
+            'flatten_output' : True,
+            'padding' : 0,
+            'num_positive_pellets' : 0,
+            'num_negative_pellets' : 0,
+            'num_random_obstacles' : 30,
+    }
+
+    env_4_params = {
+            'length' : 100,
+            'height' : 10,
+            'visible_width' : 10,
+            'num_column_obstacles' : 0,
+            'flatten_output' : True,
+            'padding' : 0,
+            'num_positive_pellets' : 5,
+            'num_negative_pellets' : 0,
+            'num_random_obstacles' : 30,
+    }
+
+    # For column number 0
     col_0_q_params = {
         Q_FUNC_PARAM_COL_NUM : 0,
         CHECKPOINT_BASE_PATH : 'helicopter_test',
@@ -182,32 +222,47 @@ def main():
         # RESTORE_CHECKPOINT : 153,
     }
 
-    # For second column
+    # For column number 1
     col_1_q_params = {
         Q_FUNC_PARAM_COL_NUM : 1,
         CHECKPOINT_BASE_PATH : 'helicopter_test',
-        CHECKPOINTS_LIST : [60], # Change to latest checkpoint for col 0
+        CHECKPOINTS_LIST : [67], # Change to latest checkpoint for col 0
         RESTORE_FROM_SAVE : False,
         # RESTORE_CHECKPOINT : 67,
     }
 
-    # For third column
+    # For column number 2
     col_2_q_params = {
         Q_FUNC_PARAM_COL_NUM : 2,
         CHECKPOINT_BASE_PATH : 'helicopter_test',
-        CHECKPOINTS_LIST : [60, 40], # Change to latest checkpoints for col 0 and 1
+        CHECKPOINTS_LIST : [67, 153], # Change to latest checkpoints for col 0 and 1
         RESTORE_FROM_SAVE : False,
         # RESTORE_CHECKPOINT : 0,
     }
 
-    seed = 0 # Use a seed of zero (you may want to randomize the seed!)
+    # For column number 3
+    col_3_q_params = {
+        Q_FUNC_PARAM_COL_NUM : 3,
+        CHECKPOINT_BASE_PATH : 'helicopter_test',
+        CHECKPOINTS_LIST : [67, 153, 68], # Change to latest checkpoints for col 0 and 1
+        RESTORE_FROM_SAVE : False,
+        # RESTORE_CHECKPOINT : 0,
+    }
+
+    # For column number 4
+    col_4_q_params = {
+        Q_FUNC_PARAM_COL_NUM : 4,
+        CHECKPOINT_BASE_PATH : 'helicopter_test',
+        CHECKPOINTS_LIST : [67, 153, 68, -1], # Change to latest checkpoints for col 0 and 1
+        RESTORE_FROM_SAVE : False,
+        # RESTORE_CHECKPOINT : 0,
+    }
+
     # Specify params for  col 0, 1, or 2
-    env = helicopter.HelicopterEnv(env_0_params)
-    set_global_seeds(seed)
-    # env.seed(seed)
+    env = helicopter.HelicopterEnv(env_3_params)
     session = get_session()
     # Specify params for  col 0, 1, or 2
-    helicopter_learn(env, session, num_timesteps=int(4e7), q_func_params=col_0_q_params)
+    helicopter_learn(env, session, num_timesteps=int(4e7), q_func_params=col_3_q_params)
 
 if __name__ == "__main__":
     main()

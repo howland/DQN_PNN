@@ -7,6 +7,8 @@ STILL = 0
 UP = 1
 DOWN = 2
 
+NEGATIVE_PELLET_VALUE = -2
+POSITIVE_PELLET_VALUE = -1
 EMPTY_VALUE = 0
 WALL_VALUE = 1
 AGENT_VALUE = 2
@@ -14,7 +16,8 @@ GOAL_VALUE = 3
 
 REWARD_SCALE = 0.5
 GOAL_REWARD = 10 * REWARD_SCALE
-PELLET_REWARD = 20 * REWARD_SCALE
+POSITIVE_PELLET_REWARD = 2 * REWARD_SCALE
+NEGATIVE_PELLET_REWARD = -2 * REWARD_SCALE
 STEP_REWARD = 1 * REWARD_SCALE
 CRASH_REWARD = -10 * REWARD_SCALE
 
@@ -33,6 +36,8 @@ class HelicopterEnv():
         'num_column_obstacles' : Number of column obstacles found throughout
                                  the environment. Must be < (length - 2 *
                                  visible_width)
+        'num_positive_pellets' : Number of positive reward pellets in env
+        'num_negative_pellets' : Number of negative reward pellets in env
         'flatten_output' : If the output returned by step() should be flattened.
         'padding' : Integer, number of layers of wall padding to apply to floor
                     and ceiling.
@@ -44,6 +49,14 @@ class HelicopterEnv():
         self.num_column_obstacles = params['num_column_obstacles']
         self.flatten_output = params['flatten_output']
         self.padding = params['padding']
+        self.num_positive_pellets = params['num_positive_pellets']
+        self.num_negative_pellets = params['num_negative_pellets']
+        self.num_random_obstacles = params['num_random_obstacles']
+
+        if self.num_random_obstacles != 0:
+            assert(self.num_column_obstacles == 0)
+        if self.num_column_obstacles != 0:
+            assert(self.num_random_obstacles == 0)
 
         if self.num_column_obstacles != 0:
             assert(self.length > 2*self.visible_width)
@@ -120,6 +133,25 @@ class HelicopterEnv():
         # empty_x, empty_y = np.where(self.maze == EMPTY_VALUE)
         # path_indices = np.random.choice(np.arange(self.height), size=(self.num_paths), replace=False)
 
+        # Generate random obstacles
+        if self.num_random_obstacles > 0:
+            empty_x, empty_y = np.where(self.environment == EMPTY_VALUE)
+            obstacle_indices = np.random.choice(np.arange(len(empty_x)),
+                                              size=(self.num_random_obstacles),
+                                              replace=False)
+            for i in obstacle_indices:
+                self.environment[empty_x[i], empty_y[i]] = WALL_VALUE
+
+        # Generate goal pellets
+        empty_x, empty_y = np.where(self.environment == EMPTY_VALUE)
+        pellet_indices = np.random.choice(np.arange(len(empty_x)),
+                                          size=(self.num_positive_pellets + self.num_negative_pellets),
+                                          replace=False)
+        for i in pellet_indices[0:self.num_positive_pellets]:
+            self.environment[empty_x[i], empty_y[i]] = POSITIVE_PELLET_VALUE
+        for i in pellet_indices[self.num_positive_pellets:]:
+            self.environment[empty_x[i], empty_y[i]] = NEGATIVE_PELLET_VALUE
+
         return self.get_state(flatten=self.flatten_output)
 
     '''
@@ -145,6 +177,10 @@ class HelicopterEnv():
         elif new_position[0] > self.length - 1:
             self.done = True
             reward = STEP_REWARD
+        elif new_pos_val == POSITIVE_PELLET_VALUE:
+            reward = POSITIVE_PELLET_REWARD
+        elif new_pos_val == NEGATIVE_PELLET_VALUE:
+            reward = NEGATIVE_PELLET_REWARD
         else:
             reward = STEP_REWARD
 
