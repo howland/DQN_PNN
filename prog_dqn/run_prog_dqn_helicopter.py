@@ -144,14 +144,7 @@ def get_session():
     session = tf.Session(config=tf_config)
     return session
 
-'''
-Deals with running pnn dqn. In the current state, the run configuration is hard
-coded in main. To change the column to train, specify the environment parameters
-for that column, and also the q function parameters. Sample configurations for
-the first three columns (0, 1, 2) can be found below, although only column 0 is
-trained.
-'''
-def main():
+def get_env_params():
     # Establish parameters for specific column
     env_0_params = { # Col 0 params
             'length' : 10,
@@ -212,7 +205,9 @@ def main():
             'num_negative_pellets' : 0,
             'num_random_obstacles' : 30,
     }
+    return [env_0_params, env_1_params, env_2_params, env_3_params, env_4_params]
 
+def get_col_params():
     # For column number 0
     col_0_q_params = {
         Q_FUNC_PARAM_COL_NUM : 0,
@@ -257,12 +252,31 @@ def main():
         RESTORE_FROM_SAVE : False,
         # RESTORE_CHECKPOINT : 0,
     }
+    return [col_0_q_params, col_1_q_params, col_2_q_params, col_3_q_params, col_4_q_params]
 
-    # Specify params for  col 0, 1, or 2
-    env = helicopter.HelicopterEnv(env_3_params)
+
+'''
+Deals with running pnn dqn. In the current state, the run configuration is hard
+coded in main. To change the column to train, specify the environment parameters
+for that column, and also the q function parameters. Sample configurations for
+the first three columns (0, 1, 2) can be found below, although only column 0 is
+trained.
+'''
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--column', type=int, default=0)
+    args = parser.parse_args()
+    assert(args.column >= 0 and args.column < 5)
+
+    # To change the environments, you must modify the parameters returned by
+    # get_env_params()!!!
+    # Additionally, the checkpoints to use for the frozen columns MUST be hardcoded
+    # in get_col_params.
+    env_parameters = get_env_params()
+    col_parameters = get_col_params()
+    env = helicopter.HelicopterEnv(env_parameters[args.column])
     session = get_session()
-    # Specify params for  col 0, 1, or 2
-    helicopter_learn(env, session, num_timesteps=int(4e7), q_func_params=col_3_q_params)
+    helicopter_learn(env, session, num_timesteps=int(4e7), q_func_params=col_parameters[args.column])
 
 if __name__ == "__main__":
     main()
