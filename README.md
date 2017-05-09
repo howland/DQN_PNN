@@ -20,6 +20,7 @@ For complete results, see the report.
 ## Credit
 The initial PNN implementation comes from synpon's prog_nn implementation, written by odellus. The license can be found at prog_dqn/prog_nn_LICENSE.
 * https://github.com/synpon/prog_nn/
+
 The initial DQN implementation comes from berkeleydeeprlcourse's DQN implementation. The license can be found at prog_dqn/dqn_LICENSE.
 * https://github.com/berkeleydeeprlcourse/homework
 
